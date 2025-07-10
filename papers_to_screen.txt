@@ -1,0 +1,5 @@
+# List your PDF files here for screening
+# One filename per line, e.g.:
+# fw_001.pdf
+# fw_002.pdf
+# fw_003.pdf

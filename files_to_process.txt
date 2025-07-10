@@ -1,0 +1,5 @@
+# List your PDF files here for data extraction
+# One filename per line, e.g.:
+# fw_003.pdf
+# fw_004.pdf
+# fw_005.pdf
