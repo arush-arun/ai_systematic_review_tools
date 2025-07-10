@@ -2,13 +2,13 @@
 
 This repository contains automated tools for conducting systematic reviews of Free Water diffusion MRI literature using multiple AI models (Claude, OpenAI GPT, and Google Gemini).
 
-## 📋 Overview
+## Overview
 
 The toolkit includes two main scripts:
 1. **`systematic_review_ai.py`** - Automated paper screening (Include/Exclude decisions)
 2. **`extract_data_gemini.py`** - Structured data extraction from included papers
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -90,7 +90,7 @@ PDFs_only/
 └── ...
 ```
 
-## 🔍 Tool 1: Paper Screening (`systematic_review_ai.py`)
+##  Tool 1: Paper Screening (`systematic_review_ai.py`)
 
 Automatically screens papers for inclusion/exclusion based on Free Water diffusion MRI criteria.
 
@@ -104,6 +104,11 @@ python3 systematic_review_ai.py
 1. **Select AI Model**: Choose from Claude, OpenAI, or Gemini
 2. **File Input**: Reads from `papers_to_screen.txt` by default
 3. **Progress Tracking**: Automatically resumes interrupted runs
+
+### Customization Options
+- **Custom Prompts**: Modify screening criteria by editing the `PromptTemplates` class in `systematic_review_ai.py`
+- **Inclusion/Exclusion Criteria**: Adapt the criteria to your specific research domain
+- **Model Parameters**: Adjust rate limiting, text limits, and model versions in the `Config` class
 
 ### Input File Format
 Create `papers_to_screen.txt` with one PDF filename per line:
@@ -143,6 +148,11 @@ python3 extract_data_gemini.py
 ### Interactive Setup
 1. **API Key**: Enter your Gemini API key when prompted
 2. **File Input**: Reads from `files_to_process.txt` by default
+
+### Customization Options
+- **Custom Prompts**: Modify data extraction fields by editing the `DATA_EXTRACTION_PROMPT` in `extract_data_gemini.py`
+- **Data Fields**: Add or remove extraction fields by updating the data classes (`StudyIdentification`, `StudyCharacteristics`, `Participants`)
+- **Output Format**: Customize CSV output structure by modifying the `to_dict()` method
 
 ### Input File Format
 Create `files_to_process.txt` with one PDF filename per line:
@@ -189,7 +199,56 @@ Both scripts support interactive model selection:
 - **Specific files mode**: Hardcoded file lists in scripts
 - **Full folder mode**: Process all PDFs in directory
 
-## 📈 Additional Tools
+###  Customization & Prompts
+
+Both scripts can be customized for different research domains:
+
+#### **Screening Criteria (`systematic_review_ai.py`)**
+```python
+# Edit the PromptTemplates class to modify criteria
+CRITERIA = """
+**Inclusion criteria:**
+- Your custom criteria here
+- Specific to your research domain
+- Peer-reviewed publication
+
+**Exclusion criteria:**
+- Your custom exclusions
+- Domain-specific exclusions
+"""
+```
+
+#### **Data Extraction Fields (`extract_data_gemini.py`)**
+```python
+# Modify the DATA_EXTRACTION_PROMPT to change fields
+DATA_EXTRACTION_PROMPT = """
+Extract the following information:
+- Your custom field 1
+- Your custom field 2
+- Domain-specific metrics
+"""
+
+# Add custom data classes for new fields
+@dataclass
+class CustomDataClass:
+    custom_field1: Optional[str] = None
+    custom_field2: Optional[str] = None
+```
+
+#### **Common Customizations:**
+- **Medical Studies**: Add medication details, dosages, adverse events
+- **Engineering Papers**: Add technical specifications, performance metrics
+- **Social Sciences**: Add demographics, survey instruments, sample characteristics
+- **Meta-Analyses**: Add effect sizes, confidence intervals, heterogeneity measures
+
+#### **How to Customize:**
+1. **Backup original files** before making changes
+2. **Edit prompt text** in the respective files
+3. **Update data classes** if adding new extraction fields
+4. **Test with small batches** before processing large datasets
+5. **Document your changes** for reproducibility
+
+## Additional Tools
 
 ### Compare Reviews (`compare_reviews.py`)
 ```bash
@@ -237,7 +296,7 @@ python3 compare_reviews.py
 ### Debug Mode
 Add `--verbose` flag or modify logging level in scripts for detailed output.
 
-## 📝 Example Workflow
+## Example Workflow
 
 1. **Prepare PDF files** in the directory
 2. **Create file lists** (`papers_to_screen.txt`, `files_to_process.txt`)
@@ -252,13 +311,6 @@ Add `--verbose` flag or modify logging level in scripts for detailed output.
    ```
 6. **Analyze results** using generated CSV files
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Create Pull Request
 
 ## 📄 License
 
@@ -270,13 +322,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - OpenAI for GPT models
 - Google for Gemini API
 - PyMuPDF for PDF processing
-
-## 📞 Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Open an issue on GitHub
-3. Review API documentation for your chosen model
 
 ---
 
