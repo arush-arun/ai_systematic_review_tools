@@ -91,7 +91,6 @@ class ExtractedData:
 
 # Choose the AI model. For this complex task, 'gemini' (with Pro) or 'claude' (with Sonnet/Opus) is recommended.
 ANALYSIS_MODEL = 'gemini'
-#API_KEY = "AIzaSyD_k3r3PW8wUBSMFJ0B5LhrrtT8rpMqaxc"
 
 
 # --- IMPORTANT: Set the list of INCLUDED PDFs you want to extract data from ---
