@@ -17,9 +17,30 @@ The toolkit includes two main scripts:
 pip install anthropic openai google-generativeai PyMuPDF pandas tqdm python-dotenv dataclasses typing
 ```
 
+### Quick Setup
+
+1. **Create a .env file** in your project directory:
+   ```bash
+   # Copy this template and add your real API keys
+   ANTHROPIC_API_KEY="sk-ant-your_claude_api_key_here"
+   OPENAI_API_KEY="sk-your_openai_api_key_here"
+   GEMINI_API_KEY="AIyour_gemini_api_key_here"
+   ```
+
+2. **Add .env to .gitignore** (if using git):
+   ```bash
+   echo ".env" >> .gitignore
+   ```
+
+3. **Run the script**:
+   ```bash
+   python3 systematic_review_ai.py
+   ```
+   The script will automatically detect your API keys from the .env file!
+
 ### API Keys Setup
 
-⚠️ **IMPORTANT**: These tools make API calls that will consume credits/tokens from your AI provider accounts. **Monitor your usage carefully** to avoid unexpected charges.
+**IMPORTANT**: These tools make API calls that will consume credits/tokens from your AI provider accounts. **Monitor your usage carefully** to avoid unexpected charges.
 
 #### Step 1: Create Accounts and Get API Keys
 
@@ -46,17 +67,35 @@ pip install anthropic openai google-generativeai PyMuPDF pandas tqdm python-dote
 
 #### Step 2: Set Up API Keys
 
-**Option 1: Environment Variables (Recommended)**
+**Recommended: Create a .env File**
+
+Create a `.env` file in your project directory with your API keys:
+
+```bash
+# .env file (create this in your project root)
+ANTHROPIC_API_KEY="sk-ant-your_claude_api_key_here"
+OPENAI_API_KEY="sk-your_openai_api_key_here"
+GEMINI_API_KEY="AIyour_gemini_api_key_here"
+```
+
+**Important .env File Security:**
+- Add `.env` to your `.gitignore` file to avoid committing API keys
+- Never share your `.env` file or commit it to version control
+- Keep your API keys secure and rotate them periodically
+
+**Alternative Options:**
+
+**Option 1: System Environment Variables**
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-your_claude_api_key"
 export OPENAI_API_KEY="sk-your_openai_api_key"  
 export GEMINI_API_KEY="AIyour_gemini_api_key"
 ```
 
-**Option 2: Manual Input**
-The scripts will prompt you to enter API keys if environment variables are not found.
+**Option 2: Manual Input (Fallback)**
+The scripts will automatically prompt you to enter API keys if they're not found in the .env file or environment variables.
 
-#### ⚠️ Usage Monitoring & Cost Control
+#### Usage Monitoring & Cost Control
 
 **Before Processing Large Datasets:**
 - **Start small**: Test with 5-10 papers first
@@ -75,7 +114,7 @@ The scripts will prompt you to enter API keys if environment variables are not f
 - Process in small batches to monitor costs
 - Set up billing alerts in your API accounts
 
-## 📁 File Structure
+## File Structure
 
 ```
 PDFs_only/
@@ -90,7 +129,7 @@ PDFs_only/
 └── ...
 ```
 
-##  Tool 1: Paper Screening (`systematic_review_ai.py`)
+## Tool 1: Paper Screening (`systematic_review_ai.py`)
 
 Automatically screens papers for inclusion/exclusion based on Free Water diffusion MRI criteria.
 
@@ -101,9 +140,10 @@ python3 systematic_review_ai.py
 ```
 
 ### Interactive Setup
-1. **Select AI Model**: Choose from Claude, OpenAI, or Gemini
-2. **File Input**: Reads from `papers_to_screen.txt` by default
-3. **Progress Tracking**: Automatically resumes interrupted runs
+1. **API Keys**: Automatically loaded from `.env` file (or prompted if not found)
+2. **Select AI Model**: Choose from Claude, OpenAI, or Gemini
+3. **File Input**: Reads from `papers_to_screen.txt` by default
+4. **Progress Tracking**: Automatically resumes interrupted runs
 
 ### Customization Options
 - **Custom Prompts**: Modify screening criteria by editing the `PromptTemplates` class in `systematic_review_ai.py`
@@ -124,18 +164,18 @@ fw_003.pdf
 
 ### Screening Criteria
 
-**✅ Inclusion Criteria:**
+**Inclusion Criteria:**
 - Human studies
 - Free Water modeling applied to diffusion MRI
 - Quantitative FW metrics reported (e.g., FW fraction, FW-corrected FA)
 - Peer-reviewed publication
 
-**❌ Exclusion Criteria:**
+**Exclusion Criteria:**
 - Non-human studies
 - No mention of FW modeling or metrics
 - Conference abstracts, reviews, or editorials
 
-## 📊 Tool 2: Data Extraction (`extract_data_gemini.py`)
+## Tool 2: Data Extraction (`extract_data_gemini.py`)
 
 Extracts structured data from papers that passed screening.
 
@@ -146,7 +186,7 @@ python3 extract_data_gemini.py
 ```
 
 ### Interactive Setup
-1. **API Key**: Enter your Gemini API key when prompted
+1. **API Key**: Automatically loaded from `.env` file (or prompted if not found)
 2. **File Input**: Reads from `files_to_process.txt` by default
 
 ### Customization Options
@@ -182,7 +222,7 @@ fw_005.pdf
 - Clinical population, Diagnosis, Disease duration
 - Severity scales, Clinical scores, Control groups, Sample sizes
 
-## 🔧 Configuration
+## Configuration
 
 ### File Lists
 - **`papers_to_screen.txt`**: PDFs for inclusion/exclusion screening
@@ -199,7 +239,7 @@ Both scripts support interactive model selection:
 - **Specific files mode**: Hardcoded file lists in scripts
 - **Full folder mode**: Process all PDFs in directory
 
-###  Customization & Prompts
+### Customization & Prompts
 
 Both scripts can be customized for different research domains:
 
@@ -263,14 +303,16 @@ python3 compare_reviews.py
 - Organizes papers by agreement status
 - Facilitates manual review workflow
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 1. **API Key Errors**
-   - Ensure valid API keys are set
-   - Check quota limits and billing status
-   - Verify API key format (Claude: `sk-ant-`, OpenAI: `sk-`, Gemini: `AI`)
+   - **Check .env file**: Ensure your `.env` file exists and contains valid API keys
+   - **Key format**: Verify API key format (Claude: `sk-ant-`, OpenAI: `sk-`, Gemini: `AI`)
+   - **No placeholders**: Remove placeholder text like "your_key_here"
+   - **Billing status**: Check quota limits and billing status in your API accounts
+   - **Environment loading**: The script will show "API key loaded from .env file" if successful
 
 2. **Unexpected Charges**
    - **Monitor your API dashboards regularly**
@@ -312,11 +354,11 @@ Add `--verbose` flag or modify logging level in scripts for detailed output.
 6. **Analyze results** using generated CSV files
 
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Anthropic for Claude API
 - OpenAI for GPT models
