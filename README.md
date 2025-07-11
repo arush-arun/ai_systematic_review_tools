@@ -19,20 +19,13 @@ pip install anthropic openai google-generativeai PyMuPDF pandas tqdm python-dote
 
 ### Quick Setup
 
-1. **Create a .env file** in your project directory:
-   ```bash
-   # Copy this template and add your real API keys
-   ANTHROPIC_API_KEY="sk-ant-your_claude_api_key_here"
-   OPENAI_API_KEY="sk-your_openai_api_key_here"
-   GEMINI_API_KEY="AIyour_gemini_api_key_here"
-   ```
 
-2. **Add .env to .gitignore** (if using git):
+1. **Add .env to .gitignore** (if using git):
    ```bash
    echo ".env" >> .gitignore
    ```
 
-3. **Run the script**:
+2. **Run the script**:
    ```bash
    python3 systematic_review_ai.py
    ```
