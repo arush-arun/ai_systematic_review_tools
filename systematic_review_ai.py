@@ -78,7 +78,7 @@ class Config:
     ANALYSIS_MODEL = None
     
     # File and Directory Paths
-    PDF_FOLDER = '.'  # Current directory
+    PDF_FOLDER = r'/home/uqahonne/git_arush/ai_systematic_review_tools/'  # Current directory
     OUTPUT_CSV = None  # Will be set based on model selection
     PROGRESS_FILE = 'review_progress.json'
     
@@ -104,7 +104,7 @@ class Config:
     MODEL_VERSIONS = {
         'claude': 'claude-3-5-sonnet-20241022',
         'openai': 'gpt-4o',
-        'gemini': 'gemini-2.5-pro-latest'
+        'gemini': 'gemini-1.5-pro-latest'
     }
 
 
@@ -119,8 +119,11 @@ class PromptTemplates:
     CRITERIA = """
     **Inclusion criteria:**
     - Human studies
+    - Diffusion MRI studies with free water quantification including:
+      * Free Water (FW) modeling/elimination
+      * NODDI isotropic volume fraction (ISOVF/VISO/FISO)
+      * Multi-compartment models with free water components
     - Free Water modeling applied to diffusion MRI
-    - Quantitative FW metrics reported (e.g., FW fraction, FW-corrected FA)
     - Peer-reviewed publication
 
     **Exclusion criteria:**
@@ -130,7 +133,7 @@ class PromptTemplates:
     """
     
     # Claude System Prompt
-    CLAUDE_SYSTEM = f"""
+    CLAUDE_SYSTEM = f'''
     You are an expert assistant conducting a full-text review for a systematic review on Free Water diffusion MRI.
     Your task is to determine if a research paper meets the specified criteria based on its full text.
     
@@ -138,43 +141,45 @@ class PromptTemplates:
     
     Your response must ONLY be a single, valid JSON object with no additional text, explanations, 
     or markdown formatting. The JSON object must have exactly two keys:
-    - "decision": either "Include" or "Exclude"
-    - "justification": a 2-3 sentence explanation for the decision
+    - decision: either Include or Exclude
+    - justification: a 2-3 sentence explanation for the decision
     
     Example response:
     {{"decision": "Include", "justification": "This is a peer-reviewed human study that explicitly applies free-water modeling to diffusion MRI data and reports quantitative FW metrics including FW fraction."}}
-    """
+    '''
     
     # OpenAI System Prompt
-    OPENAI_SYSTEM = f"""
+    OPENAI_SYSTEM = f'''
     You are an expert assistant conducting a full-text review for a systematic review on Free Water diffusion MRI.
     Analyze the provided research paper text against the specified criteria.
     
     {CRITERIA}
     
     You must respond ONLY with a valid JSON object containing:
-    - "decision": either "Include" or "Exclude"
-    - "justification": a 2-3 sentence explanation for the decision
-    """
+    - decision: either Include or Exclude
+    - justification: a 2-3 sentence explanation for the decision
+    '''
     
     # Gemini Prompt Template
-    GEMINI_TEMPLATE = f"""
+    @staticmethod
+    def get_gemini_template():
+        return f'''
     You are an expert assistant conducting a full-text review for a systematic review on Free Water diffusion MRI.
     
-    {CRITERIA}
+    {PromptTemplates.CRITERIA}
     
     Given the following full-text content, does this paper meet the inclusion criteria?
-    Your entire response must be in JSON format with two keys: "decision" (either "Include" or "Exclude") 
-    and "justification" (2-3 sentence explanation).
+    Your entire response must be in JSON format with exactly two keys:
+    - decision: either Include or Exclude
+    - justification: a 2-3 sentence explanation for the decision
     
-    Example response format:
-    {{"decision": "Include", "justification": "This is a peer-reviewed human study that applies free-water modeling and reports quantitative FW metrics."}}
+    Respond with valid JSON only, no additional text.
     
     Here is the full text:
     ---
     {{pdf_text}}
     ---
-    """
+    '''
 
 
 # ===========================================================================================
@@ -187,7 +192,8 @@ def load_environment_variables() -> None:
 
 def get_api_key(service: str) -> Optional[str]:
     """
-    Retrieve API key for the specified service.
+    Retrieve API key for the specified service, first checking .env file,
+    then prompting the user if not found.
     
     Args:
         service: The AI service name ('claude', 'openai', 'gemini')
@@ -195,18 +201,37 @@ def get_api_key(service: str) -> Optional[str]:
     Returns:
         API key string or None if not found
     """
-    env_var_map = {
+    # Map service names to environment variable names
+    env_var_names = {
         'claude': 'ANTHROPIC_API_KEY',
-        'openai': 'OPENAI_API_KEY',
+        'openai': 'OPENAI_API_KEY', 
         'gemini': 'GEMINI_API_KEY'
     }
     
-    api_key = os.getenv(env_var_map.get(service))
-    if not api_key:
-        print(f"Warning: {env_var_map.get(service)} not found in environment variables.")
-        api_key = input(f"Enter your {service.title()} API key: ").strip()
+    # First, try to get API key from environment
+    env_var = env_var_names.get(service.lower())
+    if env_var:
+        api_key = os.getenv(env_var)
+        if api_key and api_key.strip():
+            # Check if it's a placeholder key
+            if api_key.strip().startswith('YOUR_') or api_key.strip().endswith('_HERE'):
+                print(f"🔑 {service.title()} API key is a placeholder in .env file")
+            else:
+                print(f"✅ {service.title()} API key loaded from .env file")
+                return api_key.strip()
     
-    return api_key if api_key else None
+    # If not found in environment, prompt user
+    print(f"🔑 {service.title()} API key not found in .env file")
+    try:
+        # Use getpass for secure, interactive password entry
+        from getpass import getpass
+        api_key = getpass(f"Enter your {service.title()} API key: ").strip()
+        return api_key if api_key else None
+    except Exception as e:
+        print(f"Warning: Could not read API key for {service.title()}: {e}")
+        # Fallback to simple input if getpass fails (e.g., in some non-terminal environments)
+        api_key = input(f"Enter your {service.title()} API key: ").strip()
+        return api_key if api_key else None
 
 def find_year_in_text(text: str) -> str:
     """
@@ -406,34 +431,13 @@ def analyze_text_with_gemini(text: str, model: Any) -> Dict[str, str]:
     Returns:
         Dictionary with 'decision' and 'justification' keys
     """
+    prompt = PromptTemplates.get_gemini_template().format(pdf_text=text[:1_500_000])
     try:
-        # Truncate text to safe limit
-        truncated_text = text[:Config.TEXT_LIMITS['gemini']]
-        
-        prompt = PromptTemplates.GEMINI_TEMPLATE.format(pdf_text=truncated_text)
-        
         response = model.generate_content(prompt)
-        
-        # Clean response text (remove markdown formatting)
-        cleaned_response = response.text.strip().lstrip('```json').rstrip('```').strip()
-        
-        # Parse JSON response
-        result = json.loads(cleaned_response)
-        
-        # Validate required keys
-        if 'decision' not in result or 'justification' not in result:
-            return {"decision": "Parse Error", "justification": "Missing required keys in model response"}
-        
-        # Validate decision value
-        if result['decision'] not in ['Include', 'Exclude']:
-            return {"decision": "Parse Error", "justification": f"Invalid decision value: {result['decision']}"}
-        
-        return result
-        
-    except json.JSONDecodeError as e:
-        return {"decision": "JSON Error", "justification": f"Invalid JSON response from Gemini: {str(e)}"}
+        cleaned_response_text = response.text.strip().lstrip('```json').rstrip('```')
+        return json.loads(cleaned_response_text)
     except Exception as e:
-        return {"decision": "API Error", "justification": f"Gemini API error: {str(e)}"}
+        return {"decision": "API Error", "justification": str(e)}
 
 
 # ===========================================================================================
@@ -763,9 +767,9 @@ def main():
         print(f"   {decision}: {count} ({percentage:.1f}%)")
     
     # Clean up progress file
-    if os.path.exists(Config.PROGRESS_FILE):
-        os.remove(Config.PROGRESS_FILE)
-        print(f"🧹 Cleaned up progress file")
+    # if os.path.exists(Config.PROGRESS_FILE):
+    #     os.remove(Config.PROGRESS_FILE)
+    #     print(f"🧹 Cleaned up progress file")
     
     print(f"\n✅ Systematic review analysis completed successfully!")
     print(f"🔬 Model used: {Config.ANALYSIS_MODEL.title()} ({Config.MODEL_VERSIONS[Config.ANALYSIS_MODEL]})")
