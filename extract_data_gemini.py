@@ -41,11 +41,71 @@ class Participants:
     total_participants: Optional[str] = None
 
 @dataclass
+class MRIAcquisition:
+    field_strength: Optional[str] = None
+    manufacturer: Optional[str] = None
+    b_values: Optional[str] = None
+    num_b_shells: Optional[str] = None
+    gradient_directions: Optional[str] = None
+    reverse_phase_encoding: Optional[str] = None
+    voxel_size: Optional[str] = None
+    tr: Optional[str] = None
+    te: Optional[str] = None
+    acquisition_time: Optional[str] = None
+
+@dataclass
+class AnalysisMethods:
+    preprocessing: Optional[str] = None
+    analysis_software: Optional[str] = None
+    free_water_method: Optional[str] = None
+    free_water_metrics: Optional[str] = None
+    analysis_approach: Optional[str] = None
+    tissue_analyzed: Optional[str] = None
+    regions_analyzed: Optional[str] = None
+
+@dataclass
+class StatisticalAnalysis:
+    multiple_comparison_correction: Optional[str] = None
+
+@dataclass
+class FreeWaterResults:
+    clinical_group_fw_values: Optional[str] = None
+    control_group_fw_values: Optional[str] = None
+    group_comparison_p_value: Optional[str] = None
+
+@dataclass
+class Associations:
+    clinical_measure_associations: Optional[str] = None
+    measure_name: Optional[str] = None
+    association_type: Optional[str] = None
+    association_statistics: Optional[str] = None
+
+@dataclass
+class Biomarkers:
+    biomarker_measured: Optional[str] = None
+    biomarker_details: Optional[str] = None
+    biomarker_associations: Optional[str] = None
+
+@dataclass
+class KeyFindings:
+    primary_finding: Optional[str] = None
+    main_interpretation: Optional[str] = None
+    key_limitations: Optional[str] = None
+    other_measures: Optional[str] = None
+
+@dataclass
 class ExtractedData:
     filename: Optional[str] = None
     identification: Optional[StudyIdentification] = None
     characteristics: Optional[StudyCharacteristics] = None
     participants: Optional[Participants] = None
+    mri_acquisition: Optional[MRIAcquisition] = None
+    analysis_methods: Optional[AnalysisMethods] = None
+    statistical_analysis: Optional[StatisticalAnalysis] = None
+    free_water_results: Optional[FreeWaterResults] = None
+    associations: Optional[Associations] = None
+    biomarkers: Optional[Biomarkers] = None
+    key_findings: Optional[KeyFindings] = None
     error: Optional[str] = None
     
     def to_dict(self):
@@ -85,6 +145,66 @@ class ExtractedData:
                 'total_participants': self.participants.total_participants
             })
             
+        if self.mri_acquisition:
+            result.update({
+                'field_strength': self.mri_acquisition.field_strength,
+                'manufacturer': self.mri_acquisition.manufacturer,
+                'b_values': self.mri_acquisition.b_values,
+                'num_b_shells': self.mri_acquisition.num_b_shells,
+                'gradient_directions': self.mri_acquisition.gradient_directions,
+                'reverse_phase_encoding': self.mri_acquisition.reverse_phase_encoding,
+                'voxel_size': self.mri_acquisition.voxel_size,
+                'tr': self.mri_acquisition.tr,
+                'te': self.mri_acquisition.te,
+                'acquisition_time': self.mri_acquisition.acquisition_time
+            })
+            
+        if self.analysis_methods:
+            result.update({
+                'preprocessing': self.analysis_methods.preprocessing,
+                'analysis_software': self.analysis_methods.analysis_software,
+                'free_water_method': self.analysis_methods.free_water_method,
+                'free_water_metrics': self.analysis_methods.free_water_metrics,
+                'analysis_approach': self.analysis_methods.analysis_approach,
+                'tissue_analyzed': self.analysis_methods.tissue_analyzed,
+                'regions_analyzed': self.analysis_methods.regions_analyzed
+            })
+            
+        if self.statistical_analysis:
+            result.update({
+                'multiple_comparison_correction': self.statistical_analysis.multiple_comparison_correction
+            })
+            
+        if self.free_water_results:
+            result.update({
+                'clinical_group_fw_values': self.free_water_results.clinical_group_fw_values,
+                'control_group_fw_values': self.free_water_results.control_group_fw_values,
+                'group_comparison_p_value': self.free_water_results.group_comparison_p_value
+            })
+            
+        if self.associations:
+            result.update({
+                'clinical_measure_associations': self.associations.clinical_measure_associations,
+                'measure_name': self.associations.measure_name,
+                'association_type': self.associations.association_type,
+                'association_statistics': self.associations.association_statistics
+            })
+            
+        if self.biomarkers:
+            result.update({
+                'biomarker_measured': self.biomarkers.biomarker_measured,
+                'biomarker_details': self.biomarkers.biomarker_details,
+                'biomarker_associations': self.biomarkers.biomarker_associations
+            })
+            
+        if self.key_findings:
+            result.update({
+                'primary_finding': self.key_findings.primary_finding,
+                'main_interpretation': self.key_findings.main_interpretation,
+                'key_limitations': self.key_findings.key_limitations,
+                'other_measures': self.key_findings.other_measures
+            })
+            
         return result
 
 # --- 2. CONFIGURATION ---
@@ -106,23 +226,26 @@ SPECIFIC_FILES_TO_PROCESS = [ 'fw_003.pdf', 'fw_004.pdf'
 ]
 
 # --- Update this path to the folder containing your INCLUDED PDFs ---
-PDF_FOLDER = '.'  # Current directory 
+PDF_FOLDER = r'/home/uqahonne/uq/FW_systematic_review/systematic_review/PDFs_only' 
 
 # The name of the final spreadsheet file.
-OUTPUT_CSV = 'data_extraction_gemini_summary.csv'
+OUTPUT_CSV = 'test2_extraction_gemini_summary_subset_5.csv'
 
 
 # --- 2. API KEY and NEW PROMPT TEMPLATE ---
 
-# Get API key from user input
-try:
-    API_KEY = getpass(f'Enter your {ANALYSIS_MODEL.title()} API Key: ')
-except (EOFError, KeyboardInterrupt):
-    # Fallback to direct input if getpass fails
-    API_KEY = input(f'Enter your {ANALYSIS_MODEL.title()} API Key: ')
+# Get API key from environment variable or user input
+API_KEY = os.getenv('GEMINI_API_KEY')
+
+if not API_KEY:
+    try:
+        API_KEY = getpass(f'Enter your {ANALYSIS_MODEL.title()} API Key: ')
+    except (EOFError, KeyboardInterrupt):
+        # Fallback to direct input if getpass fails
+        API_KEY = input(f'Enter your {ANALYSIS_MODEL.title()} API Key: ')
 
 if not API_KEY or API_KEY.strip() == "":
-    print("Error: No API key provided. Exiting.")
+    print("Error: No API key provided. Set GEMINI_API_KEY environment variable or enter when prompted. Exiting.")
     exit(1)
 
 # --- NEW DETAILED PROMPT ---
@@ -131,29 +254,86 @@ DATA_EXTRACTION_PROMPT = """
 You are a meticulous research assistant conducting systematic data extraction for a meta-analysis on free water diffusion MRI studies.
 For each paper provided, extract the following information exactly as specified. If information is not available, write "Not reported" or "NR".
 
+**DATA EXTRACTION - PART 1: STUDY & PARTICIPANT DETAILS**
+
+Extract the following information from the provided paper. Write "Not reported" if unavailable.
+
 **STUDY IDENTIFICATION**
-- Title: [Exact title from paper]
+- Title: [Exact title]
 - Lead author: [First author surname, initials]
-- Year of publication: [YYYY]
-- Journal name: [Full journal name]
+- Year: [YYYY]
+- Journal: [Full name]
 - DOI: [Complete DOI]
-- Country: United States | UK | Canada | Australia | Other [specify if other]
+- Country: United States | UK | Canada | Australia | Other [specify]
 
 **STUDY CHARACTERISTICS**
-- Aim of study: [One sentence describing primary objective]
-- Study design: Observational study | Interventional study | Longitudinal study | Other [specify]
-- Follow-up duration: [If longitudinal, specify duration in months/years]
+- Aim: [One sentence describing primary objective]
+- Study design: Observational study | Interventional study | Longitudinal study | Other
+- Follow-up duration: [If longitudinal, specify duration]
 - Multi-site study: Yes | No
 
 **PARTICIPANTS**
 - Clinical population: Neurology | Psychiatry
-- Clinical population diagnosis: [Specific condition, e.g., "Multiple sclerosis"]
-- Disease duration: [Mean years ± SD if reported]
-- Disease severity scale/assessment used: [Scale name, e.g., "EDSS", "HAMD"]
-- Disease severity/Clinical scores: [Mean ± SD]
-- Control group: Yes | No [If yes, specify type]
-- Total number of participants: [Number]
+- Diagnosis: [Specific condition]
+- Disease duration: [Mean ± SD years]
+- Severity scale used: [Scale name]
+- Clinical scores: [Mean ± SD]
+- Control group: Yes | No [specify type if yes]
+- Total N: [Number]
 
+**DATA EXTRACTION - PART 2: MRI PARAMETERS & METHODS**
+
+Extract technical details from the provided paper. Write "Not reported" if unavailable.
+
+**MRI ACQUISITION**
+- Scanner field strength: 1.5T | 3T | 7T
+- Manufacturer: Siemens | GE | Philips | Other [specify]
+- b-values: [List all values]
+- Number of b-shells: 1 | 2 | 3 | 4 | 5+
+- Gradient directions: [Total number]
+- Reverse phase-encoding: Yes | No
+- Voxel size: [e.g., "2×2×2 mm³"]
+- TR: [milliseconds]
+- TE: [milliseconds]
+- Acquisition time: [minutes]
+
+**ANALYSIS METHODS**
+- Preprocessing: [List: Denoising | Motion correction | Distortion correction | Other]
+- Analysis software: [List: FSL | MATLAB | Python | FreeSurfer | Other]
+- Free-water method: Free-water imaging | NODDI | DBSI | Other [specify]
+- Free-water metrics: FW fraction | ISOVF/VISO/FISO | ICVF | Other [specify]
+- Analysis approach: Whole-brain | ROI | Tract-based | Voxel-wise
+- Tissue analyzed: White matter | Gray matter | Lesions | Other
+- Regions analyzed: [List specific brain regions/tracts]
+
+**DATA EXTRACTION - PART 3: RESULTS & FINDINGS**
+
+Extract statistical results and findings from the provided paper. Write "Not reported" if unavailable.
+
+**STATISTICAL ANALYSIS**
+- Multiple comparison correction: Bonferroni | FDR | FWE | None | Other
+
+**FREE WATER RESULTS**
+- Clinical group FW values: [Mean ± SD, N]
+- Control group FW values: [Mean ± SD, N] 
+- Group comparison p-value: [If reported]
+
+**ASSOCIATIONS**
+- Clinical measure associations: Yes | No
+- Measure name: [e.g., "EDSS", "HAMD"]
+- Association type: Pearson | Spearman | Regression | Other
+- Association statistics: [r/β value, p-value]
+
+**BIOMARKERS**
+- Biomarker measured: CSF | PET | Blood | Genetics | None
+- Biomarker details: [e.g., "CSF tau"]
+- Biomarker associations: [Statistics if reported]
+
+**KEY FINDINGS**
+- Primary finding: [One sentence summary]
+- Main interpretation: [Authors' conclusion]
+- Key limitations: [Main limitations mentioned]
+- Other measures: [ROC AUC, mediation etc. if reported]
 
 Here is the full text of the paper:
 ---
@@ -200,6 +380,13 @@ def parse_json_response(json_data):
     identification = StudyIdentification()
     characteristics = StudyCharacteristics()
     participants = Participants()
+    mri_acquisition = MRIAcquisition()
+    analysis_methods = AnalysisMethods()
+    statistical_analysis = StatisticalAnalysis()
+    free_water_results = FreeWaterResults()
+    associations = Associations()
+    biomarkers = Biomarkers()
+    key_findings = KeyFindings()
     
     # Map JSON fields to data class fields
     for key, value in json_data.items():
@@ -210,11 +397,34 @@ def parse_json_response(json_data):
         elif key in ['clinical_population', 'diagnosis', 'disease_duration', 'severity_scale', 
                     'clinical_scores', 'control_group', 'total_participants']:
             setattr(participants, key, value)
+        elif key in ['field_strength', 'manufacturer', 'b_values', 'num_b_shells', 'gradient_directions',
+                    'reverse_phase_encoding', 'voxel_size', 'tr', 'te', 'acquisition_time']:
+            setattr(mri_acquisition, key, value)
+        elif key in ['preprocessing', 'analysis_software', 'free_water_method', 'free_water_metrics',
+                    'analysis_approach', 'tissue_analyzed', 'regions_analyzed']:
+            setattr(analysis_methods, key, value)
+        elif key in ['multiple_comparison_correction']:
+            setattr(statistical_analysis, key, value)
+        elif key in ['clinical_group_fw_values', 'control_group_fw_values', 'group_comparison_p_value']:
+            setattr(free_water_results, key, value)
+        elif key in ['clinical_measure_associations', 'measure_name', 'association_type', 'association_statistics']:
+            setattr(associations, key, value)
+        elif key in ['biomarker_measured', 'biomarker_details', 'biomarker_associations']:
+            setattr(biomarkers, key, value)
+        elif key in ['primary_finding', 'main_interpretation', 'key_limitations', 'other_measures']:
+            setattr(key_findings, key, value)
     
     return ExtractedData(
         identification=identification,
         characteristics=characteristics,
-        participants=participants
+        participants=participants,
+        mri_acquisition=mri_acquisition,
+        analysis_methods=analysis_methods,
+        statistical_analysis=statistical_analysis,
+        free_water_results=free_water_results,
+        associations=associations,
+        biomarkers=biomarkers,
+        key_findings=key_findings
     )
 
 def parse_structured_response(text):
@@ -222,6 +432,13 @@ def parse_structured_response(text):
     identification = StudyIdentification()
     characteristics = StudyCharacteristics()
     participants = Participants()
+    mri_acquisition = MRIAcquisition()
+    analysis_methods = AnalysisMethods()
+    statistical_analysis = StatisticalAnalysis()
+    free_water_results = FreeWaterResults()
+    associations = Associations()
+    biomarkers = Biomarkers()
+    key_findings = KeyFindings()
     
     # Split text into lines and process
     lines = text.strip().split('\n')
@@ -237,20 +454,20 @@ def parse_structured_response(text):
             field_name = field_part.strip()
             value = value_part.strip()
             
-            # Map to appropriate data class
+            # Map to appropriate data class - Part 1
             if field_name == 'Title':
                 identification.title = value
             elif field_name == 'Lead author':
                 identification.lead_author = value
-            elif field_name == 'Year of publication':
+            elif field_name in ['Year', 'Year of publication']:
                 identification.year = value
-            elif field_name == 'Journal name':
+            elif field_name in ['Journal', 'Journal name']:
                 identification.journal = value
             elif field_name == 'DOI':
                 identification.doi = value
             elif field_name == 'Country':
                 identification.country = value
-            elif field_name == 'Aim of study':
+            elif field_name in ['Aim', 'Aim of study']:
                 characteristics.study_aim = value
             elif field_name == 'Study design':
                 characteristics.study_design = value
@@ -260,23 +477,101 @@ def parse_structured_response(text):
                 characteristics.multisite_study = value
             elif field_name == 'Clinical population':
                 participants.clinical_population = value
-            elif field_name == 'Clinical population diagnosis':
+            elif field_name in ['Diagnosis', 'Clinical population diagnosis']:
                 participants.diagnosis = value
             elif field_name == 'Disease duration':
                 participants.disease_duration = value
-            elif field_name == 'Disease severity scale/assessment used':
+            elif field_name in ['Severity scale used', 'Disease severity scale/assessment used']:
                 participants.severity_scale = value
-            elif field_name == 'Disease severity/Clinical scores':
+            elif field_name in ['Clinical scores', 'Disease severity/Clinical scores']:
                 participants.clinical_scores = value
             elif field_name == 'Control group':
                 participants.control_group = value
-            elif field_name == 'Total number of participants':
+            elif field_name in ['Total N', 'Total number of participants']:
                 participants.total_participants = value
+            # Part 2 - MRI Acquisition
+            elif field_name == 'Scanner field strength':
+                mri_acquisition.field_strength = value
+            elif field_name == 'Manufacturer':
+                mri_acquisition.manufacturer = value
+            elif field_name == 'b-values':
+                mri_acquisition.b_values = value
+            elif field_name == 'Number of b-shells':
+                mri_acquisition.num_b_shells = value
+            elif field_name == 'Gradient directions':
+                mri_acquisition.gradient_directions = value
+            elif field_name == 'Reverse phase-encoding':
+                mri_acquisition.reverse_phase_encoding = value
+            elif field_name == 'Voxel size':
+                mri_acquisition.voxel_size = value
+            elif field_name == 'TR':
+                mri_acquisition.tr = value
+            elif field_name == 'TE':
+                mri_acquisition.te = value
+            elif field_name == 'Acquisition time':
+                mri_acquisition.acquisition_time = value
+            # Part 2 - Analysis Methods
+            elif field_name == 'Preprocessing':
+                analysis_methods.preprocessing = value
+            elif field_name == 'Analysis software':
+                analysis_methods.analysis_software = value
+            elif field_name == 'Free-water method':
+                analysis_methods.free_water_method = value
+            elif field_name == 'Free-water metrics':
+                analysis_methods.free_water_metrics = value
+            elif field_name == 'Analysis approach':
+                analysis_methods.analysis_approach = value
+            elif field_name == 'Tissue analyzed':
+                analysis_methods.tissue_analyzed = value
+            elif field_name == 'Regions analyzed':
+                analysis_methods.regions_analyzed = value
+            # Part 3 - Statistical Analysis
+            elif field_name == 'Multiple comparison correction':
+                statistical_analysis.multiple_comparison_correction = value
+            # Part 3 - Free Water Results
+            elif field_name == 'Clinical group FW values':
+                free_water_results.clinical_group_fw_values = value
+            elif field_name == 'Control group FW values':
+                free_water_results.control_group_fw_values = value
+            elif field_name == 'Group comparison p-value':
+                free_water_results.group_comparison_p_value = value
+            # Part 3 - Associations
+            elif field_name == 'Clinical measure associations':
+                associations.clinical_measure_associations = value
+            elif field_name == 'Measure name':
+                associations.measure_name = value
+            elif field_name == 'Association type':
+                associations.association_type = value
+            elif field_name == 'Association statistics':
+                associations.association_statistics = value
+            # Part 3 - Biomarkers
+            elif field_name == 'Biomarker measured':
+                biomarkers.biomarker_measured = value
+            elif field_name == 'Biomarker details':
+                biomarkers.biomarker_details = value
+            elif field_name == 'Biomarker associations':
+                biomarkers.biomarker_associations = value
+            # Part 3 - Key Findings
+            elif field_name == 'Primary finding':
+                key_findings.primary_finding = value
+            elif field_name == 'Main interpretation':
+                key_findings.main_interpretation = value
+            elif field_name == 'Key limitations':
+                key_findings.key_limitations = value
+            elif field_name == 'Other measures':
+                key_findings.other_measures = value
     
     return ExtractedData(
         identification=identification,
         characteristics=characteristics,
-        participants=participants
+        participants=participants,
+        mri_acquisition=mri_acquisition,
+        analysis_methods=analysis_methods,
+        statistical_analysis=statistical_analysis,
+        free_water_results=free_water_results,
+        associations=associations,
+        biomarkers=biomarkers,
+        key_findings=key_findings
     )
 
 # --- 4. MAIN EXECUTION SCRIPT ---
