@@ -1,7 +1,5 @@
 # Usage Guide
 
-⚠️ **COST WARNING**: These tools consume API credits. Start with small batches (5-10 papers) to test costs. Monitor your API usage dashboards regularly.
-
 ## Step-by-Step Tutorial
 
 ### 1. Initial Setup
@@ -10,6 +8,9 @@
 # Clone or download the repository
 git clone <repository-url>
 cd systematic-review-tools
+
+# Install dependencies
+pip install docling anthropic google-generativeai PyMuPDF pandas tqdm
 
 # Run setup script
 python3 setup.py
@@ -24,6 +25,9 @@ Choose one method:
 export ANTHROPIC_API_KEY="sk-ant-..."
 export OPENAI_API_KEY="sk-..."
 export GEMINI_API_KEY="AI..."
+
+# For hybrid extraction (use same Claude key)
+export CLAUDE_API_KEY="sk-ant-..."
 ```
 
 **Method B: Create .env file**
@@ -31,17 +35,20 @@ export GEMINI_API_KEY="AI..."
 echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
 echo "OPENAI_API_KEY=sk-..." >> .env
 echo "GEMINI_API_KEY=AI..." >> .env
+echo "CLAUDE_API_KEY=sk-ant-..." >> .env
 ```
 
 ### 3. Prepare Your PDF Files
 
-Place your PDF files in the same directory as the scripts:
+Place your PDF files in the `new_test_pdfs/` directory:
 ```
 systematic-review-tools/
-├── fw_001.pdf
-├── fw_002.pdf
-├── fw_003.pdf
-└── ...
+├── new_test_pdfs/
+│   ├── Zhou2021.pdf
+│   ├── Chang2021.pdf
+│   ├── Burciu2017.pdf
+│   └── ...
+└── scripts...
 ```
 
 ### 4. Create File Lists
@@ -86,49 +93,58 @@ Open the CSV file to see:
 
 ### 7. Extract Data from Included Papers
 
-Update `files_to_process.txt` with papers marked as "Include", then:
-
+**Option A: Basic Extraction (Gemini only)**
 ```bash
 python3 extract_data_gemini.py
 ```
-
 **Output:** `data_extraction_gemini_summary_subset_4.csv`
+
+**Option B: Advanced Hybrid Extraction (RECOMMENDED)**
+```bash
+python3 extract_data_hybrid_docling_pymupdf.py
+```
+
+**Interactive prompts:**
+1. Select AI model:
+   ```
+   Available AI models:
+   1. Gemini (Google)
+   2. Claude (Anthropic)
+   Select AI model (1 for Gemini, 2 for Claude): 2
+   ```
+2. Script processes with hybrid approach
+3. Shows progress for each PDF
+
+**Output:** 
+- `hybrid_docling_pymupdf_gemini_extraction_results.csv` (if Gemini selected)
+- `hybrid_docling_pymupdf_claude_extraction_results.csv` (if Claude selected)
+- `docling_out/` folder with extracted tables
 
 ### 8. Analyze Results
 
-The data extraction CSV contains structured columns:
-- Study identification (title, author, year, journal)
-- Study characteristics (design, duration, aims)
-- Participant details (population, sample size, controls)
+The hybrid extraction CSV contains comprehensive structured columns:
 
-## Cost Estimation
-
-**Before starting, estimate your costs:**
-
-| Papers | Screening Cost | Extraction Cost | Total (est.) |
-|--------|---------------|-----------------|--------------|
-| 10     | $0.10-$0.50   | $0.20-$1.00     | $0.30-$1.50  |
-| 50     | $0.50-$2.50   | $1.00-$5.00     | $1.50-$7.50  |
-| 100    | $1.00-$5.00   | $2.00-$10.00    | $3.00-$15.00 |
-| 500    | $5.00-$25.00  | $10.00-$50.00   | $15.00-$75.00|
-
-**Recommendations:**
-- **Gemini**: Cheapest option, has free tier
-- **Claude**: Most accurate but most expensive
-- **OpenAI**: Middle ground for cost/quality
+**Study Identification:** title, lead_author, year, journal, doi, country
+**Study Characteristics:** study_aim, followup_duration, multisite_study  
+**Participants:** clinical_population, n_patient_group, n_control_group, n_overall, age/gender stats
+**MRI Acquisition:** scanner_strength, scanner_manufacturer, b_values, gradient_directions, voxel_size, tr, te
+**Analysis Methods:** preprocessing_steps, analysis_software, free_water_method, regions_analyzed
+**Free Water Results:** clinical_group_fw_values, control_group_fw_values, group_comparison_p_value ⭐
+**Key Findings:** primary_finding, main_interpretation, key_limitations
 
 ## Example Workflow
 
+### Complete Workflow
 ```bash
 # 1. Setup
 python3 setup.py
 
-# 2. Edit file lists (START SMALL!)
-nano papers_to_screen.txt  # Add 5-10 PDF filenames first
+# 2. Edit file lists
+nano papers_to_screen.txt  # Add your PDF filenames
 
 # 3. Screen papers
 python3 systematic_review_ai.py
-# Choose: 3 (Gemini) for cost-effective testing
+# Choose: 1 (Claude)
 # Wait for processing...
 
 # 4. Review results
@@ -137,12 +153,27 @@ cat systematic_review_claude_*.csv
 # 5. Update extraction list
 nano files_to_process.txt  # Add included papers
 
-# 6. Extract data
-python3 extract_data_gemini.py
-# Enter API key when prompted
+# 6. Extract data with hybrid method (RECOMMENDED)
+python3 extract_data_hybrid_docling_pymupdf.py
+# Choose: 2 (Claude)
+# Wait for processing...
 
-# 7. View structured data
-cat data_extraction_gemini_*.csv
+# 7. View comprehensive structured data
+cat hybrid_docling_pymupdf_claude_extraction_results.csv
+```
+
+### Quick Test (5 Pre-selected Papers)
+```bash
+# 1. Set API keys
+export GEMINI_API_KEY="your_key"
+export CLAUDE_API_KEY="your_key"
+
+# 2. Run hybrid extraction directly
+python3 extract_data_hybrid_docling_pymupdf.py
+# Choose: 2 (Claude recommended)
+
+# 3. Check results
+head -3 hybrid_docling_pymupdf_claude_extraction_results.csv
 ```
 
 ## Tips for Best Results
@@ -153,7 +184,11 @@ cat data_extraction_gemini_*.csv
 - **Gemini**: Fastest, good for large initial screenings
 
 ### Data Extraction
-- Currently uses Gemini (most cost-effective)
+- **Hybrid method** (RECOMMENDED): Best accuracy, extracts actual numerical values
+- **Basic method**: Fast but less comprehensive
+- **AI Model Choice**: 
+  - **Claude**: Superior for complex papers, better text analysis
+  - **Gemini**: Faster, good for high-volume processing
 - Review extracted data for accuracy
 - Some fields may show "Not reported" if information unavailable
 
