@@ -2,127 +2,63 @@
 
 This repository contains automated tools for conducting systematic reviews of Free Water diffusion MRI literature using multiple AI models (Claude, OpenAI GPT, and Google Gemini).
 
-## Overview
+## 📋 Overview
 
-The toolkit includes two main scripts:
+The toolkit includes three main scripts:
 1. **`systematic_review_ai.py`** - Automated paper screening (Include/Exclude decisions)
-2. **`extract_data_gemini.py`** - Structured data extraction from included papers
+2. **`extract_data_gemini.py`** - Basic data extraction from included papers
+3. **`extract_data_hybrid_docling_pymupdf.py`** - ⭐ **Advanced hybrid extraction with dual AI support**
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
 ```bash
 # Install required Python packages
 pip install anthropic openai google-generativeai PyMuPDF pandas tqdm python-dotenv dataclasses typing
+
+# For hybrid extraction (recommended)
+pip install docling
 ```
-
-### Quick Setup
-
-
-1. **Add .env to .gitignore** (if using git):
-   ```bash
-   echo ".env" >> .gitignore
-   ```
-
-2. **Run the script**:
-   ```bash
-   python3 systematic_review_ai.py
-   ```
-   The script will automatically detect your API keys from the .env file!
 
 ### API Keys Setup
 
-**IMPORTANT**: These tools make API calls that will consume credits/tokens from your AI provider accounts. **Monitor your usage carefully** to avoid unexpected charges.
+You'll need API keys for the AI models you want to use:
 
-#### Step 1: Create Accounts and Get API Keys
+- **Claude (Anthropic)**: Get from [Anthropic Console](https://console.anthropic.com/)
+- **OpenAI GPT**: Get from [OpenAI Platform](https://platform.openai.com/)
+- **Google Gemini**: Get from [Google AI Studio](https://aistudio.google.com/)
 
-**Claude (Anthropic)**
-1. Visit [Anthropic Console](https://console.anthropic.com/)
-2. Sign up for an account
-3. Go to **API Keys** section
-4. Click **Create Key** and copy the key (starts with `sk-ant-`)
-5. **Usage**: $3-$15 per 1M tokens (varies by model)
-
-**OpenAI GPT**
-1. Visit [OpenAI Platform](https://platform.openai.com/)
-2. Sign up for an account  
-3. Go to **API Keys** section
-4. Click **Create new secret key** and copy the key (starts with `sk-`)
-5. **Usage**: $2.50-$10 per 1M tokens (varies by model)
-
-**Google Gemini**
-1. Visit [Google AI Studio](https://aistudio.google.com/)
-2. Sign in with Google account
-3. Click **Get API Key** → **Create API Key**
-4. Copy the key (starts with `AI`)
-5. **Usage**: Free tier available, then $0.125-$2 per 1M tokens
-
-#### Step 2: Set Up API Keys
-
-**Recommended: Create a .env File**
-
-Create a `.env` file in your project directory with your API keys:
-
+#### Option 1: Environment Variables (Recommended)
 ```bash
-# .env file (create this in your project root)
-ANTHROPIC_API_KEY="sk-ant-your_claude_api_key_here"
-OPENAI_API_KEY="sk-your_openai_api_key_here"
-GEMINI_API_KEY="AIyour_gemini_api_key_here"
+export ANTHROPIC_API_KEY="your_claude_api_key"
+export OPENAI_API_KEY="your_openai_api_key"  
+export GEMINI_API_KEY="your_gemini_api_key"
+
+# For hybrid extraction script
+export CLAUDE_API_KEY="your_claude_api_key"    # Same as ANTHROPIC_API_KEY
 ```
 
-**Important .env File Security:**
-- Add `.env` to your `.gitignore` file to avoid committing API keys
-- Never share your `.env` file or commit it to version control
-- Keep your API keys secure and rotate them periodically
+#### Option 2: Manual Input
+The scripts will prompt you to enter API keys if environment variables are not found.
 
-**Alternative Options:**
-
-**Option 1: System Environment Variables**
-```bash
-export ANTHROPIC_API_KEY="sk-ant-your_claude_api_key"
-export OPENAI_API_KEY="sk-your_openai_api_key"  
-export GEMINI_API_KEY="AIyour_gemini_api_key"
-```
-
-**Option 2: Manual Input (Fallback)**
-The scripts will automatically prompt you to enter API keys if they're not found in the .env file or environment variables.
-
-#### Usage Monitoring & Cost Control
-
-**Before Processing Large Datasets:**
-- **Start small**: Test with 5-10 papers first
-- **Check pricing**: Review current API pricing on provider websites
-- **Set billing limits**: Configure spending limits in your API accounts
-- **Monitor usage**: Check your usage dashboards regularly
-
-**Estimated Costs (approximate):**
-- **Screening**: $0.01-$0.05 per paper (varies by length and model)
-- **Data extraction**: $0.02-$0.10 per paper (more detailed analysis)
-- **100 papers**: Roughly $3-$15 total (depending on model and paper length)
-
-**Cost-Saving Tips:**
-- Use **Gemini** for large datasets (lowest cost, free tier available)
-- Use **Claude** for final/critical reviews (highest accuracy)
-- Process in small batches to monitor costs
-- Set up billing alerts in your API accounts
-
-## File Structure
+## 📁 File Structure
 
 ```
 PDFs_only/
-├── systematic_review_ai.py          # Main screening script
-├── extract_data_gemini.py           # Data extraction script
-├── compare_reviews.py               # Compare AI reviewer results
-├── conflict_resolution_workflow.py  # Handle disagreements
-├── papers_to_screen.txt             # List of PDFs to screen
-├── files_to_process.txt             # List of PDFs for data extraction
-├── fw_001.pdf                       # PDF files
-├── fw_002.pdf
-└── ...
+├── systematic_review_ai.py                    # Main screening script
+├── extract_data_gemini.py                     # Basic data extraction script
+├── extract_data_hybrid_docling_pymupdf.py     # ⭐ Advanced hybrid extraction
+├── compare_reviews.py                         # Compare AI reviewer results
+├── conflict_resolution_workflow.py            # Handle disagreements
+├── papers_to_screen.txt                       # List of PDFs to screen
+├── files_to_process.txt                       # List of PDFs for data extraction
+├── new_test_pdfs/                             # PDF files directory
+├── docling_out/                               # Intermediate extraction files
+└── extraction_template.csv                    # Data extraction template
 ```
 
-## Tool 1: Paper Screening (`systematic_review_ai.py`)
+## 🔍 Tool 1: Paper Screening (`systematic_review_ai.py`)
 
 Automatically screens papers for inclusion/exclusion based on Free Water diffusion MRI criteria.
 
@@ -133,15 +69,9 @@ python3 systematic_review_ai.py
 ```
 
 ### Interactive Setup
-1. **API Keys**: Automatically loaded from `.env` file (or prompted if not found)
-2. **Select AI Model**: Choose from Claude, OpenAI, or Gemini
-3. **File Input**: Reads from `papers_to_screen.txt` by default
-4. **Progress Tracking**: Automatically resumes interrupted runs
-
-### Customization Options
-- **Custom Prompts**: Modify screening criteria by editing the `PromptTemplates` class in `systematic_review_ai.py`
-- **Inclusion/Exclusion Criteria**: Adapt the criteria to your specific research domain
-- **Model Parameters**: Adjust rate limiting, text limits, and model versions in the `Config` class
+1. **Select AI Model**: Choose from Claude, OpenAI, or Gemini
+2. **File Input**: Reads from `papers_to_screen.txt` by default
+3. **Progress Tracking**: Automatically resumes interrupted runs
 
 ### Input File Format
 Create `papers_to_screen.txt` with one PDF filename per line:
@@ -157,18 +87,18 @@ fw_003.pdf
 
 ### Screening Criteria
 
-**Inclusion Criteria:**
+**✅ Inclusion Criteria:**
 - Human studies
 - Free Water modeling applied to diffusion MRI
 - Quantitative FW metrics reported (e.g., FW fraction, FW-corrected FA)
 - Peer-reviewed publication
 
-**Exclusion Criteria:**
+**❌ Exclusion Criteria:**
 - Non-human studies
 - No mention of FW modeling or metrics
 - Conference abstracts, reviews, or editorials
 
-## Tool 2: Data Extraction (`extract_data_gemini.py`)
+## 📊 Tool 2: Basic Data Extraction (`extract_data_gemini.py`)
 
 Extracts structured data from papers that passed screening.
 
@@ -179,13 +109,8 @@ python3 extract_data_gemini.py
 ```
 
 ### Interactive Setup
-1. **API Key**: Automatically loaded from `.env` file (or prompted if not found)
+1. **API Key**: Enter your Gemini API key when prompted
 2. **File Input**: Reads from `files_to_process.txt` by default
-
-### Customization Options
-- **Custom Prompts**: Modify data extraction fields by editing the `DATA_EXTRACTION_PROMPT` in `extract_data_gemini.py`
-- **Data Fields**: Add or remove extraction fields by updating the data classes (`StudyIdentification`, `StudyCharacteristics`, `Participants`)
-- **Output Format**: Customize CSV output structure by modifying the `to_dict()` method
 
 ### Input File Format
 Create `files_to_process.txt` with one PDF filename per line:
@@ -215,16 +140,120 @@ fw_005.pdf
 - Clinical population, Diagnosis, Disease duration
 - Severity scales, Clinical scores, Control groups, Sample sizes
 
-## Configuration
+## 🚀 Tool 3: Advanced Hybrid Extraction (`extract_data_hybrid_docling_pymupdf.py`)
+
+**⭐ RECOMMENDED** - The most advanced extraction tool combining multiple PDF processing methods with dual AI support.
+
+### Key Features
+
+- 🤖 **Dual AI Support**: Choose between Gemini or Claude AI
+- 📊 **Hybrid Processing**: Combines Docling (tables) + PyMuPDF (text) extraction
+- 🧠 **Intelligent Merging**: Field-specific prioritization for optimal results
+- 📈 **Numerical Values**: Extracts actual table values (not "See Table X")
+- 📋 **Template-Based**: Follows standardized extraction template
+
+### Usage
+
+```bash
+python extract_data_hybrid_docling_pymupdf.py
+```
+
+**Interactive Setup:**
+1. Select AI model (1=Gemini, 2=Claude)
+2. Script validates API keys automatically
+3. Processes files with hybrid approach
+
+### Output Files
+
+- **Gemini**: `hybrid_docling_pymupdf_gemini_extraction_results.csv`
+- **Claude**: `hybrid_docling_pymupdf_claude_extraction_results.csv`
+- **Tables**: `docling_out/{filename}-table-{N}.csv`
+
+### Extraction Process
+
+```
+PDF Input → [Docling Tables] + [PyMuPDF Text] → AI Analysis → Intelligent Merge → CSV Output
+```
+
+1. **Docling Processing**: Extracts structured tables as CSV
+2. **PyMuPDF Processing**: Comprehensive text extraction
+3. **AI Analysis**: Gemini/Claude processes both data sources
+4. **Intelligent Merging**: Combines results using field priorities
+
+### Field Prioritization
+
+| Field Type | Preferred Method | Reason |
+|------------|------------------|---------|
+| Scanner specs | Docling | Better table parsing |
+| Free water values | PyMuPDF | Often in text/captions |
+| Demographics | Either | Uses best available |
+
+### AI Model Comparison
+
+| Model | Strengths | Best For | Speed | Cost |
+|-------|-----------|----------|-------|------|
+| **Gemini** | Fast, good tables | High-volume processing | Fast | Lower |
+| **Claude** | Superior analysis | Complex papers | Medium | Higher |
+
+### Configuration
+
+Edit the script to customize:
+
+```python
+# Files to process
+SPECIFIC_FILES_TO_PROCESS = [
+    'Zhou2021.pdf', 
+    'Burciu2017.pdf', 
+    'Chang2021.pdf'
+]
+
+# Input/output paths
+PDF_FOLDER = 'new_test_pdfs/'
+```
+
+### Extracted Data Fields (Complete Template)
+
+**Study Identification**
+- Title, Lead Author, Year, Journal, DOI, Country
+
+**Study Characteristics**
+- Study aim, Follow-up duration, Multi-site study
+
+**Participants**
+- Clinical population, Sample sizes (patient/control/overall)
+- Age statistics (mean ± SD, ranges)
+- Gender distribution
+
+**MRI Acquisition**
+- Scanner strength, Manufacturer
+- b-values, Gradient directions, Reverse phase-encoding
+- Voxel size, TR, TE, Acquisition time
+
+**Analysis Methods**
+- Preprocessing steps, Analysis software, Analysis approach
+- Free-water method, Regions analyzed, Metrics reported
+- Atlas information, ROI definition method
+
+**Free Water Results** ⭐
+- **Clinical group FW values**: Exact numerical values from tables
+- **Control group FW values**: Exact numerical values from tables  
+- **Group comparison p-values**: Statistical significance
+
+**Correlations & Key Findings**
+- Correlation coefficients, Longitudinal data
+- Primary findings, Main interpretation, Limitations
+
+## 🔧 Configuration
 
 ### File Lists
 - **`papers_to_screen.txt`**: PDFs for inclusion/exclusion screening
 - **`files_to_process.txt`**: PDFs for data extraction
 
 ### Model Selection
-Both scripts support interactive model selection:
-- Available models detected automatically
-- User prompted to choose preferred AI model
+All scripts support interactive model selection:
+- **Screening script**: Claude, OpenAI, or Gemini
+- **Basic extraction**: Gemini only
+- **Hybrid extraction**: Gemini or Claude (user choice)
 - Output files named according to selected model
 
 ### Processing Options
@@ -232,56 +261,7 @@ Both scripts support interactive model selection:
 - **Specific files mode**: Hardcoded file lists in scripts
 - **Full folder mode**: Process all PDFs in directory
 
-### Customization & Prompts
-
-Both scripts can be customized for different research domains:
-
-#### **Screening Criteria (`systematic_review_ai.py`)**
-```python
-# Edit the PromptTemplates class to modify criteria
-CRITERIA = """
-**Inclusion criteria:**
-- Your custom criteria here
-- Specific to your research domain
-- Peer-reviewed publication
-
-**Exclusion criteria:**
-- Your custom exclusions
-- Domain-specific exclusions
-"""
-```
-
-#### **Data Extraction Fields (`extract_data_gemini.py`)**
-```python
-# Modify the DATA_EXTRACTION_PROMPT to change fields
-DATA_EXTRACTION_PROMPT = """
-Extract the following information:
-- Your custom field 1
-- Your custom field 2
-- Domain-specific metrics
-"""
-
-# Add custom data classes for new fields
-@dataclass
-class CustomDataClass:
-    custom_field1: Optional[str] = None
-    custom_field2: Optional[str] = None
-```
-
-#### **Common Customizations:**
-- **Medical Studies**: Add medication details, dosages, adverse events
-- **Engineering Papers**: Add technical specifications, performance metrics
-- **Social Sciences**: Add demographics, survey instruments, sample characteristics
-- **Meta-Analyses**: Add effect sizes, confidence intervals, heterogeneity measures
-
-#### **How to Customize:**
-1. **Backup original files** before making changes
-2. **Edit prompt text** in the respective files
-3. **Update data classes** if adding new extraction fields
-4. **Test with small batches** before processing large datasets
-5. **Document your changes** for reproducibility
-
-## Additional Tools
+## 📈 Additional Tools
 
 ### Compare Reviews (`compare_reviews.py`)
 ```bash
@@ -296,67 +276,85 @@ python3 compare_reviews.py
 - Organizes papers by agreement status
 - Facilitates manual review workflow
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Common Issues
 
 1. **API Key Errors**
-   - **Check .env file**: Ensure your `.env` file exists and contains valid API keys
-   - **Key format**: Verify API key format (Claude: `sk-ant-`, OpenAI: `sk-`, Gemini: `AI`)
-   - **No placeholders**: Remove placeholder text like "your_key_here"
-   - **Billing status**: Check quota limits and billing status in your API accounts
-   - **Environment loading**: The script will show "API key loaded from .env file" if successful
+   - Ensure valid API keys are set
+   - Check quota limits and billing status
 
-2. **Unexpected Charges**
-   - **Monitor your API dashboards regularly**
-   - Set up billing alerts in your provider accounts
-   - Start with small test batches (5-10 papers)
-   - Check current pricing before large runs
-
-3. **PDF Reading Errors**
+2. **PDF Reading Errors**
    - Some PDFs may be corrupted or password-protected
    - Check PDF file paths and permissions
-   - Image-based PDFs may not extract text properly
 
-4. **Memory Issues**
+3. **Memory Issues**
    - Large PDFs may exceed text limits
    - Script automatically truncates text to model limits
-   - Very long papers may result in incomplete analysis
 
-5. **Rate Limiting**
+4. **Rate Limiting**
    - Scripts include automatic rate limiting (5-second delays)
    - Adjust `RATE_LIMIT_DELAY` in config if needed
-   - Some providers have stricter limits for new accounts
 
 ### Debug Mode
 Add `--verbose` flag or modify logging level in scripts for detailed output.
 
-## Example Workflow
+## 📝 Example Workflow
 
-1. **Prepare PDF files** in the directory
+### Option A: Complete Workflow (Recommended)
+1. **Prepare PDF files** in `new_test_pdfs/` directory
 2. **Create file lists** (`papers_to_screen.txt`, `files_to_process.txt`)
 3. **Run screening**:
    ```bash
    python3 systematic_review_ai.py
    ```
 4. **Review results** and resolve conflicts
-5. **Extract data** from included papers:
+5. **Extract data** with advanced hybrid method:
    ```bash
-   python3 extract_data_gemini.py
+   python3 extract_data_hybrid_docling_pymupdf.py
+   # Choose: 1 (Gemini) or 2 (Claude)
    ```
 6. **Analyze results** using generated CSV files
 
+### Option B: Quick Test (5 papers)
+```bash
+# 1. Set API keys
+export GEMINI_API_KEY="your_key_here"
+export CLAUDE_API_KEY="your_key_here"
 
-## License
+# 2. Run hybrid extraction
+python3 extract_data_hybrid_docling_pymupdf.py
+# Choose: 2 (Claude recommended)
+
+# 3. View results
+cat hybrid_docling_pymupdf_claude_extraction_results.csv
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/new-feature`)
+3. Commit changes (`git commit -am 'Add new feature'`)
+4. Push to branch (`git push origin feature/new-feature`)
+5. Create Pull Request
+
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - Anthropic for Claude API
 - OpenAI for GPT models
 - Google for Gemini API
 - PyMuPDF for PDF processing
+
+## 📞 Support
+
+For issues or questions:
+1. Check the troubleshooting section above
+2. Open an issue on GitHub
+3. Review API documentation for your chosen model
 
 ---
 
