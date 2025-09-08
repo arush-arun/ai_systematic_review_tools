@@ -31,7 +31,7 @@ You'll need API keys for the AI models you want to use:
 
 #### Option 1: Environment Variables (Recommended)
 ```bash
-export ANTHROPIC_API_KEY="your_claude_api_key"
+export CLAUDE_API_KEY="your_claude_api_key"
 export OPENAI_API_KEY="your_openai_api_key"  
 export GEMINI_API_KEY="your_gemini_api_key"
 
@@ -48,7 +48,7 @@ The scripts will prompt you to enter API keys if environment variables are not f
 PDFs_only/
 ├── systematic_review_ai.py                    # Main screening script
 ├── extract_data_gemini.py                     # Basic data extraction script
-├── extract_data_hybrid_docling_pymupdf.py     # ⭐ Advanced hybrid extraction
+├── extract_data_hybrid_docling_pymupdf.py     # Advanced hybrid extraction
 ├── compare_reviews.py                         # Compare AI reviewer results
 ├── conflict_resolution_workflow.py            # Handle disagreements
 ├── papers_to_screen.txt                       # List of PDFs to screen
@@ -142,7 +142,7 @@ fw_005.pdf
 
 ## 🚀 Tool 3: Advanced Hybrid Extraction (`extract_data_hybrid_docling_pymupdf.py`)
 
-**⭐ RECOMMENDED** - The most advanced extraction tool combining multiple PDF processing methods with dual AI support.
+**RECOMMENDED** - The most advanced extraction tool combining multiple PDF processing methods with dual AI support.
 
 ### Key Features
 
@@ -165,9 +165,9 @@ python extract_data_hybrid_docling_pymupdf.py
 
 ### Output Files
 
-- **Gemini**: `hybrid_docling_pymupdf_gemini_extraction_results.csv`
-- **Claude**: `hybrid_docling_pymupdf_claude_extraction_results.csv`
-- **Tables**: `docling_out/{filename}-table-{N}.csv`
+- **Main CSV**: `Z_hybrid_docling_pymupdf_extraction_results.csv` (configurable)
+- **Table Files**: `docling_out/{filename}-table-{N}.csv`
+- **Markdown**: `docling_out/{filename}.md` (Docling intermediate output)
 
 ### Extraction Process
 
@@ -190,26 +190,49 @@ PDF Input → [Docling Tables] + [PyMuPDF Text] → AI Analysis → Intelligent 
 
 ### AI Model Comparison
 
-| Model | Strengths | Best For | Speed | Cost |
-|-------|-----------|----------|-------|------|
-| **Gemini** | Fast, good tables | High-volume processing | Fast | Lower |
-| **Claude** | Superior analysis | Complex papers | Medium | Higher |
+| Model | Version | Strengths | Best For | Speed | Cost |
+|-------|---------|-----------|----------|-------|------|
+| **Gemini** | 2.5-Pro | Fast, good tables | High-volume processing | Fast | Lower |
+| **Claude** | Sonnet 4 | Superior analysis | Complex papers | Medium | Higher |
+
+### Advanced Features
+
+- **Hybrid Merging**: Intelligently combines Docling and PyMuPDF results
+- **Field Prioritization**: Uses method best suited for each data type
+- **Error Recovery**: Falls back to single method if one fails
+- **Progress Tracking**: Shows detailed extraction status
+- **Table Extraction**: Preserves exact numerical values from tables
+- **Text Mining**: Captures values embedded in paragraphs/captions
 
 ### Configuration
 
-Edit the script to customize:
+Key configuration options in the script:
 
 ```python
-# Files to process
-SPECIFIC_FILES_TO_PROCESS = [
-    'Zhou2021.pdf', 
-    'Burciu2017.pdf', 
-    'Chang2021.pdf'
-]
+# File processing mode
+USE_FILE_LIST = True  # Process files from text file vs. specific files
+FILE_LIST_PATH = 'Files_to_process.txt'  # Input file list
 
-# Input/output paths
-PDF_FOLDER = 'new_test_pdfs/'
+# Paths
+PDF_FOLDER = 'confirmed_pdfs/'  # PDF directory
+OUTPUT_CSV = 'hybrid_docling_pymupdf_extraction_results.csv'
+DOCLING_OUTPUT_FOLDER = "docling_out"  # Intermediate files
+
+# Rate limiting
+time.sleep(5)  # 5-second delay between API calls
 ```
+
+### Processing Modes
+
+1. **File List Mode (Default)**:
+   - Set `USE_FILE_LIST = True`
+   - Create `Z_files_to_process.txt` with filenames
+   - Recommended for production use
+
+2. **Specific Files Mode**:
+   - Set `USE_FILE_LIST = False` 
+   - Edit `SPECIFIC_FILES_TO_PROCESS` list in script
+   - Good for testing specific papers
 
 ### Extracted Data Fields (Complete Template)
 
@@ -349,12 +372,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Google for Gemini API
 - PyMuPDF for PDF processing
 
-## 📞 Support
 
-For issues or questions:
-1. Check the troubleshooting section above
-2. Open an issue on GitHub
-3. Review API documentation for your chosen model
 
 ---
 
