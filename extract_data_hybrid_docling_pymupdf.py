@@ -215,11 +215,13 @@ class ExtractedData:
         return result
 
 # Configuration
-USE_FILE_LIST = False  # Process specific file for testing
-SPECIFIC_FILES_TO_PROCESS = ['Zhou2021.pdf', 'Zhou2023.pdf', 'Burciu2017.pdf', 'Chang2021.pdf', 'Wang2019.pdf']
-PDF_FOLDER = r'/home/uqahonne/uq/FW_systematic_review/systematic_review/PDFs_only/new_test_pdfs'
-OUTPUT_CSV = 'hybrid_docling_pymupdf_extraction_results.csv'
-DOCLING_OUTPUT_DIR = Path("docling_out")
+USE_FILE_LIST = True  # Process files from text file
+SPECIFIC_FILES_TO_PROCESS = []  # Will be loaded from file
+PDF_FOLDER = r'/home/uqahonne/uq/FW_systematic_review/systematic_review/PDFs_only/confirmed_pdfs'
+FILE_LIST_PATH = '/home/uqahonne/uq/FW_systematic_review/systematic_review/PDFs_only/Z_files_to_process.txt'
+OUTPUT_CSV = 'Z_hybrid_docling_pymupdf_extraction_results.csv'
+DOCLING_OUTPUT_FOLDER = "docling_out"
+DOCLING_OUTPUT_DIR = Path(DOCLING_OUTPUT_FOLDER)
 
 # AI Model Selection
 def select_ai_model():
@@ -900,7 +902,18 @@ if __name__ == "__main__":
         print(f"Error: The folder '{PDF_FOLDER}' does not exist.")
         exit(1)
 
-    files_to_process = SPECIFIC_FILES_TO_PROCESS
+    # Load files to process from text file
+    if USE_FILE_LIST:
+        try:
+            with open(FILE_LIST_PATH, 'r') as f:
+                files_to_process = [line.strip() for line in f.readlines() if line.strip()]
+            print(f"Loaded {len(files_to_process)} files from {FILE_LIST_PATH}")
+        except FileNotFoundError:
+            print(f"Error: File list '{FILE_LIST_PATH}' not found.")
+            exit(1)
+    else:
+        files_to_process = SPECIFIC_FILES_TO_PROCESS
+    
     print(f"--- Processing {len(files_to_process)} file(s) with Hybrid Docling + PyMuPDF + {AI_MODEL.upper()} ---")
 
     all_results = []
@@ -922,11 +935,10 @@ if __name__ == "__main__":
     flat_results = [result.to_dict() for result in all_results]
     final_df = pd.DataFrame(flat_results)
     
-    # Update output filename to include AI model
-    output_filename = f'hybrid_docling_pymupdf_{AI_MODEL}_extraction_results.csv'
-    final_df.to_csv(output_filename, index=False, encoding='utf-8')
+    # Save results using configured output filename
+    final_df.to_csv(OUTPUT_CSV, index=False, encoding='utf-8')
 
-    print(f"\n✅ Hybrid extraction complete! Results saved to '{output_filename}'.")
+    print(f"\n✅ Hybrid extraction complete! Results saved to '{OUTPUT_CSV}'.")
     print("Here are the key results:")
     print(f"Columns available: {list(final_df.columns)}")
     
